@@ -1,0 +1,102 @@
+{
+  "theme": "dark",
+  "archetype": "2 (Performance Pro)",
+  "vibe_and_emotion": "Focused, elite, commanding, energetic. Designed as a 'command center' for personal wellness, shifting the traditional soft wellness aesthetic into a high-performance tactical interface with high-contrast elements.",
+  "colors": {
+    "background_primary": "#0A0A0C",
+    "background_secondary": "#121217",
+    "background_tertiary": "#1A1A21",
+    "text_primary": "#FFFFFF",
+    "text_secondary": "#A1A1AA",
+    "accent_primary": "#007AFF",
+    "accent_hover": "#3395FF",
+    "success": "#00D084",
+    "warning": "#FF9F0A",
+    "danger": "#FF3B30",
+    "border_subtle": "rgba(255, 255, 255, 0.08)",
+    "border_focus": "#007AFF",
+    "glass_background": "rgba(10, 10, 12, 0.75)"
+  },
+  "typography": {
+    "font_family_headings": "Barlow Condensed, sans-serif",
+    "font_family_body": "DM Sans, sans-serif",
+    "font_family_mono": "JetBrains Mono, monospace",
+    "rules": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight uppercase",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight uppercase",
+      "h3": "text-xl sm:text-2xl font-bold tracking-tight",
+      "h4": "text-lg sm:text-xl font-semibold",
+      "body": "text-base font-normal leading-relaxed tracking-wide",
+      "small_labels": "text-xs font-bold uppercase tracking-[0.2em] text-[#A1A1AA]"
+    }
+  },
+  "layout_and_spacing": {
+    "philosophy": "Control Room Grid. Dense, organized, high-utility.",
+    "grid_system": "grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6",
+    "padding_scale": {
+      "container": "p-4 md:p-8",
+      "card": "p-5 md:p-6"
+    },
+    "border_radius": {
+      "cards": "rounded-lg",
+      "buttons": "rounded-md",
+      "inputs": "rounded-md"
+    },
+    "alignment": "Strictly left-aligned text, sharp geometrical alignments. Optical alignment for icons within buttons."
+  },
+  "surface_strategies": {
+    "cards": "Tactical Minimalism. Flat background (#121217), 1px solid border (border-white/10), no soft shadows.",
+    "header": "Crystal Glassmorphism. backdrop-blur-xl bg-[#0A0A0C]/75 with 1px bottom border-white/10.",
+    "active_states": "Inner glow or sharp 2px bottom border in Volt Blue (#007AFF) to indicate selection.",
+    "ai_coach_card": "The Tracing Beam effect. Subtle moving gradient border or neon-tinted edges (border-[#007AFF]/40) to signify AI activity."
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#007AFF] text-white font-bold uppercase tracking-wider hover:bg-[#3395FF] transition-colors active:scale-95",
+      "secondary": "bg-transparent border border-white/20 text-white font-bold hover:bg-white/5 transition-colors active:scale-95"
+    },
+    "inputs": "bg-[#1A1A21] border border-white/10 text-white focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] rounded-md transition-all",
+    "progress_bars": "bg-[#1A1A21] rounded-full overflow-hidden. Fill should be vibrant Volt Blue (#007AFF) with no gradients.",
+    "charts": "Recharts. Use sharp lines, no curved tension. Monochromatic blue scales or neon accents. No axis grids to maintain minimalist look.",
+    "badges": "bg-[#1A1A21] border border-white/10 px-2 py-1 text-xs uppercase tracking-wider"
+  },
+  "motion_and_interaction": {
+    "hover": "Subtle background lightening (bg-white/5).",
+    "click": "Slight scale down (active:scale-[0.98]).",
+    "page_transitions": "Fade and slight slide-up (opacity 0 to 1, translateY 10px to 0).",
+    "data_loading": "Minimalist skeleton loaders using #1A1A21 pulse effect."
+  },
+  "accessibility": {
+    "contrast": "Ensure pure white text on dark grey/obsidian backgrounds passes WCAG AA minimum 4.5:1. Never use dark grey text on black.",
+    "focus_states": "All interactive elements must have a high-contrast focus ring (focus:ring-2 focus:ring-[#007AFF]).",
+    "testing_attributes": "Add data-testid to all interactive elements."
+  },
+  "media": {
+    "icon_library": "lucide-react",
+    "image_urls": [
+      {
+        "category": "hero_background",
+        "url": "https://images.unsplash.com/photo-1766266959379-18ef0ab993f6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzN8MHwxfHNlYXJjaHwzfHxtb3RpdmF0aW9uYWwlMjBtb3VudGFpbiUyMHN1bnJpc2V8ZW58MHx8fHwxNzc0NTA1Njc5fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Motivational mountain sunrise to be used subtly behind the Daily Quote section with a heavy dark overlay."
+      },
+      {
+        "category": "challenge_banner",
+        "url": "https://images.pexels.com/photos/3039888/pexels-photo-3039888.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Athletic runner in a street marathon, suitable for the Challenges section background."
+      },
+      {
+        "category": "ai_coach_avatar",
+        "url": "https://images.unsplash.com/photo-1763596396590-81193928cdeb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGdsb3dpbmclMjBibHVlJTIwb3JifGVufDB8fHx8MTc3NDUwNTY4NXww&ixlib=rb-4.1.0&q=85",
+        "description": "Dark abstract glowing orb, representing the AI Coach persona."
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Use standard HTML/Tailwind setup for dashboard layout. Apply the 'Control Room' grid system for the analytics and habit tracking areas.",
+    "Avoid using Shadcn's default soft card styles. Instead, override cards with bg-[#121217] and border-white/10 to match the 'Tactical Minimalism' style.",
+    "For the daily quote card, overlay the hero_background image with a heavy bg-black/70 gradient so the white text is perfectly readable.",
+    "Use Recharts for the Analytics and Vibe Score section. Disable background grid lines to maintain the sleek, dark aesthetic.",
+    "Integrate the ai_coach_avatar in the AI chat section.",
+    "Ensure all interactive elements have proper data-testid attributes for testing."
+  ]
+}
