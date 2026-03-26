@@ -36,14 +36,17 @@ User wanted to migrate their existing Vibly wellness app (originally built with 
 - [x] Supabase PostgreSQL database + Supabase Auth integration
 - [x] React frontend with 10+ page components (95% test pass)
 - [x] Dark theme design with Barlow Condensed + DM Sans fonts
-- [x] AI Coach using GPT-4o-mini via Emergent Universal Key
+- [x] AI Coach using GPT-4o-mini
 - [x] **Onboarding Flow** - 3-step welcome (fitness level → goals → habits)
 - [x] **Social Feed** - Community posts, vibe cards, likes, sharing
 - [x] **Push Notifications** - Browser notification reminders
 - [x] **PWA Support** - Installable on mobile
 - [x] **Custom Logo** - AI-generated V energy wave
 - [x] **Tagline** - "Track it. Feel it. Vibly."
-- [x] Comprehensive README.md with setup instructions
+- [x] Comprehensive README.md with Render + Vercel deployment guide
+- [x] All Emergent branding removed - clean "Vibly" branding only
+- [x] render.yaml, vercel.json, Procfile, build.sh deployment files
+- [x] .env.example files for easy local setup
 
 ## Prioritized Backlog
 

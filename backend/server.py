@@ -24,7 +24,7 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage
 load_dotenv(Path(__file__).parent / '.env')
 
 JWT_SECRET = os.environ.get('JWT_SECRET', 'vibly-fallback-secret')
-EMERGENT_KEY = os.environ.get('EMERGENT_LLM_KEY')
+AI_KEY = os.environ.get('AI_API_KEY')
 SUPABASE_URL = os.environ.get('SUPABASE_URL')
 SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY')
 
@@ -546,7 +546,7 @@ Be encouraging, give practical advice, keep responses concise (2-3 sentences max
 Use emojis sparingly. Never diagnose medical conditions."""
 
     chat = LlmChat(
-        api_key=EMERGENT_KEY,
+        api_key=AI_KEY,
         session_id=f"vibly-{user.id}-{session_id}",
         system_message=system_msg
     )

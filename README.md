@@ -1,147 +1,229 @@
-# Vibly - AI-Powered Wellness Command Center
+# Vibly - Track it. Feel it.
 
-Vibly is a comprehensive wellness application that helps you track habits, set goals, monitor vitals, and get personalized AI coaching advice. Built with modern technologies for optimal performance.
+Your AI-Powered Wellness Command Center. Track habits, set goals, monitor vitals, get personalized AI coaching, and join a community of wellness seekers.
 
 ## Features
 
-- **Dashboard** - Your wellness command center with Vibe Score, daily quotes, quick stats
+- **Onboarding** - Personalized 3-step setup (fitness level, goals, habit selection)
+- **Dashboard** - Vibe Score, daily quotes, quick stats at a glance
 - **Habit Tracker** - Create, toggle, and track daily habits with streak tracking
 - **Goals** - Set and track progress on personal goals with visual progress bars
-- **Vitals Logging** - Track water intake, sleep, mood, steps, and weight daily
+- **Vitals Logging** - Track water, sleep, mood, steps, and weight daily
 - **AI Coach** - Powered by GPT-4o-mini, get personalized wellness advice
+- **Community Feed** - Share updates, post vibe cards, like posts
 - **Challenges** - Join community challenges or create your own with leaderboards
-- **Analytics** - Visual charts showing your habit completion, goals progress, and vitals trends
-- **Profile** - Manage your profile and view your wellness stats
+- **Analytics** - Visual charts for habit completion, goal progress, and vital trends
+- **Push Notifications** - Reminders for water intake and habit check-ins
+- **PWA Support** - Install on any phone via "Add to Home Screen"
+- **Profile** - Manage your profile and view wellness stats
 
 ## Tech Stack
 
 ### Backend
-- **Python 3.11** + **FastAPI**
-- **Supabase PostgreSQL** (via SQLAlchemy async)
-- **Emergent Universal Key** for AI (OpenAI GPT-4o-mini)
-- **JWT** for authentication
-- **bcrypt** for password hashing
+- Python 3.11 + FastAPI
+- Supabase PostgreSQL (via SQLAlchemy async)
+- Supabase Auth (with JWT fallback)
+- OpenAI GPT-4o-mini for AI Coach
+- bcrypt for password hashing
 
 ### Frontend
-- **React 18** + **Tailwind CSS**
-- **Recharts** for data visualization
-- **Lucide React** for icons
-- **Framer Motion** for animations
+- React 18 + Tailwind CSS
+- Recharts for data visualization
+- Lucide React for icons
+- Progressive Web App (PWA)
 
 ### Database
-- **Supabase** (PostgreSQL) - hosted at supabase.co
+- Supabase (PostgreSQL) - Free tier available
 
 ## Project Structure
 
 ```
-vibly/
+Vibly/
 ├── backend/
-│   ├── server.py          # Main FastAPI app with all API routes
-│   ├── database.py        # SQLAlchemy async engine & session config
-│   ├── models.py          # SQLAlchemy ORM models
-│   ├── requirements.txt   # Python dependencies
-│   ├── .env               # Environment variables (create from .env.example)
-│   └── alembic/           # Database migrations (optional)
+│   ├── server.py            # Main FastAPI app (all API routes)
+│   ├── database.py          # SQLAlchemy async engine config
+│   ├── models.py            # ORM models (users, habits, goals, etc.)
+│   ├── requirements.txt     # Python dependencies
+│   ├── .env.example         # Environment variables template
+│   └── .env                 # Your environment variables (create this)
 ├── frontend/
 │   ├── public/
-│   │   └── index.html     # HTML template
+│   │   ├── index.html       # HTML template with PWA setup
+│   │   ├── manifest.json    # PWA manifest
+│   │   ├── service-worker.js # Service worker for offline support
+│   │   ├── logo192.png      # App icon (192px)
+│   │   └── logo512.png      # App icon (512px)
 │   ├── src/
-│   │   ├── index.js       # React entry point
-│   │   ├── index.css      # Global styles (Tailwind)
-│   │   ├── App.js         # Main app with navigation
-│   │   ├── api.js         # API client helper
+│   │   ├── index.js         # React entry point
+│   │   ├── index.css        # Global styles (Tailwind)
+│   │   ├── App.js           # Main app with navigation
+│   │   ├── api.js           # API client helper
 │   │   └── components/
-│   │       ├── AuthPage.js       # Login/Register
-│   │       ├── Dashboard.js      # Home dashboard
-│   │       ├── HabitsPage.js     # Habit tracking
-│   │       ├── GoalsPage.js      # Goals management
-│   │       ├── VitalsPage.js     # Vitals logging
-│   │       ├── AICoachPage.js    # AI chat coach
-│   │       ├── ChallengesPage.js # Community challenges
-│   │       ├── AnalyticsPage.js  # Data analytics
-│   │       └── ProfilePage.js    # User profile
-│   ├── package.json       # Node.js dependencies
-│   ├── tailwind.config.js # Tailwind CSS config
-│   └── .env               # Frontend environment variables
-└── README.md
+│   │       ├── AuthPage.js         # Login/Register
+│   │       ├── OnboardingFlow.js   # 3-step onboarding
+│   │       ├── Dashboard.js        # Home dashboard
+│   │       ├── HabitsPage.js       # Habit tracking
+│   │       ├── GoalsPage.js        # Goals management
+│   │       ├── VitalsPage.js       # Vitals logging
+│   │       ├── AICoachPage.js      # AI chat coach
+│   │       ├── FeedPage.js         # Community feed
+│   │       ├── ChallengesPage.js   # Community challenges
+│   │       ├── AnalyticsPage.js    # Data analytics
+│   │       └── ProfilePage.js      # User profile
+│   ├── package.json         # Node.js dependencies
+│   ├── tailwind.config.js   # Tailwind config
+│   └── .env.example         # Frontend env template
+├── render.yaml              # Render deployment config
+├── vercel.json              # Vercel deployment config
+├── Procfile                 # Process file for deployment
+├── build.sh                 # Build script
+└── README.md                # This file
 ```
 
-## Setup Instructions (Local Development)
+---
+
+## Local Development Setup
 
 ### Prerequisites
 - Python 3.11+
 - Node.js 18+ and Yarn
-- A Supabase account (free tier works)
+- A Supabase account (free tier: [supabase.com](https://supabase.com))
 
-### 1. Clone the Repository
+### Step 1: Clone the Repository
 ```bash
 git clone https://github.com/Faisaldarjee/Vibly.git
 cd Vibly
 ```
 
-### 2. Backend Setup
+### Step 2: Backend Setup
 ```bash
 cd backend
 
 # Create virtual environment
 python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# OR
-venv\Scripts\activate     # Windows
+source venv/bin/activate       # Linux/Mac
+# OR: venv\Scripts\activate    # Windows
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Create .env file (copy from example below)
+# Create .env from template
 cp .env.example .env
-# Edit .env with your credentials
+# Edit .env with your credentials (see below)
 ```
 
-### 3. Backend Environment Variables (.env)
-Create `backend/.env` with:
+### Step 3: Configure Environment Variables
+
+Edit `backend/.env`:
 ```env
 DATABASE_URL=postgresql://postgres.YOUR_PROJECT_REF:YOUR_PASSWORD@aws-0-REGION.pooler.supabase.com:6543/postgres
-EMERGENT_LLM_KEY=your-emergent-key-here
-JWT_SECRET=your-random-secret-key-here
+AI_API_KEY=your-openai-api-key
+JWT_SECRET=any-random-string-here
 SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 SUPABASE_ANON_KEY=your-supabase-anon-key
 SUPABASE_SERVICE_KEY=your-supabase-service-role-key
 ```
 
-**How to get Supabase credentials:**
-1. Go to [supabase.com](https://supabase.com) and create a free project
-2. Go to Settings > API to find your keys
-3. Go to Connect > ORM > Transaction Pooler for the DATABASE_URL
+**Where to get these:**
 
-**How to get Emergent LLM Key:**
-- Sign up at [emergentagent.com](https://emergentagent.com)
-- Go to Profile > Universal Key
-- Top up balance (very affordable)
+| Variable | Where to get it |
+|----------|----------------|
+| DATABASE_URL | Supabase Dashboard → Connect → ORM → Transaction Pooler |
+| AI_API_KEY | [OpenAI Platform](https://platform.openai.com/api-keys) (or any compatible provider) |
+| JWT_SECRET | Any random string (e.g., generate with `openssl rand -hex 32`) |
+| SUPABASE_URL | Supabase Dashboard → Settings → API → Project URL |
+| SUPABASE_ANON_KEY | Supabase Dashboard → Settings → API → anon public key |
+| SUPABASE_SERVICE_KEY | Supabase Dashboard → Settings → API → service_role key |
 
-### 4. Run Backend
+### Step 4: Run Backend
 ```bash
 cd backend
 uvicorn server:app --host 0.0.0.0 --port 8001 --reload
 ```
-Backend will be at: `http://localhost:8001`
-API docs: `http://localhost:8001/docs`
+- Backend: `http://localhost:8001`
+- API Docs: `http://localhost:8001/docs`
 
-### 5. Frontend Setup
+### Step 5: Frontend Setup
 ```bash
 cd frontend
 
 # Install dependencies
 yarn install
 
-# Create .env file
+# Create .env
 echo "REACT_APP_BACKEND_URL=http://localhost:8001" > .env
 
 # Start development server
 yarn start
 ```
-Frontend will be at: `http://localhost:3000`
+- Frontend: `http://localhost:3000`
 
-## API Endpoints
+---
+
+## Deployment Guide
+
+### Option 1: Render (Backend) + Vercel (Frontend) — FREE
+
+#### Deploy Backend on Render
+
+1. Go to [render.com](https://render.com) and sign up (free)
+2. Click **"New" → "Web Service"**
+3. Connect your GitHub repo (Faisaldarjee/Vibly)
+4. Configure:
+   - **Name**: `vibly-backend`
+   - **Region**: Singapore (closest to India)
+   - **Branch**: `main`
+   - **Root Directory**: `backend`
+   - **Runtime**: `Python 3`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn server:app --host 0.0.0.0 --port $PORT`
+5. Add **Environment Variables** (same as your .env):
+   - `DATABASE_URL` = your Supabase connection string
+   - `AI_API_KEY` = your API key
+   - `JWT_SECRET` = your secret
+   - `SUPABASE_URL` = your Supabase URL
+   - `SUPABASE_ANON_KEY` = your anon key
+   - `SUPABASE_SERVICE_KEY` = your service key
+6. Click **"Create Web Service"**
+7. Wait for deployment. Copy the URL (e.g., `https://vibly-backend.onrender.com`)
+
+> **Note**: Render free tier sleeps after 15 min of inactivity. First request after sleep takes ~30 seconds.
+
+#### Deploy Frontend on Vercel
+
+1. Go to [vercel.com](https://vercel.com) and sign up (free)
+2. Click **"Add New" → "Project"**
+3. Import your GitHub repo (Faisaldarjee/Vibly)
+4. Configure:
+   - **Framework Preset**: Create React App
+   - **Root Directory**: `frontend`
+   - **Build Command**: `yarn build`
+   - **Output Directory**: `build`
+5. Add **Environment Variable**:
+   - `REACT_APP_BACKEND_URL` = `https://vibly-backend.onrender.com` (your Render URL)
+6. Click **"Deploy"**
+7. Your app will be live at `https://vibly.vercel.app` (or custom domain)
+
+#### After Deployment
+- Open your Vercel URL on your phone
+- Tap the browser menu → **"Add to Home Screen"**
+- The app installs like a native app with the Vibly icon!
+
+### Option 2: Custom VPS (DigitalOcean, AWS, etc.)
+```bash
+# Backend
+cd backend
+gunicorn server:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8001
+
+# Frontend
+cd frontend
+yarn build
+# Serve the 'build' folder with nginx
+```
+
+---
+
+## API Documentation
 
 ### Auth
 | Method | Endpoint | Description |
@@ -149,6 +231,11 @@ Frontend will be at: `http://localhost:3000`
 | POST | /api/auth/register | Register new user |
 | POST | /api/auth/login | Login |
 | GET | /api/auth/me | Get current user |
+
+### Onboarding
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /api/onboarding | Complete onboarding (fitness level, goals, habits) |
 
 ### Habits
 | Method | Endpoint | Description |
@@ -179,7 +266,14 @@ Frontend will be at: `http://localhost:3000`
 |--------|----------|-------------|
 | POST | /api/ai/coach | Send message to AI coach |
 | GET | /api/ai/history/:session_id | Get chat history |
-| GET | /api/ai/sessions | Get all chat sessions |
+
+### Community Feed
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/feed | Get community feed |
+| POST | /api/feed | Create a post |
+| POST | /api/feed/:id/like | Toggle like on a post |
+| POST | /api/feed/share-vibe | Share a vibe card |
 
 ### Challenges
 | Method | Endpoint | Description |
@@ -187,14 +281,8 @@ Frontend will be at: `http://localhost:3000`
 | GET | /api/challenges | Get all challenges |
 | POST | /api/challenges | Create challenge |
 | POST | /api/challenges/:id/join | Join challenge |
-| POST | /api/challenges/:id/checkin | Check in to challenge |
+| POST | /api/challenges/:id/checkin | Check in |
 | GET | /api/challenges/:id/leaderboard | Get leaderboard |
-
-### Analytics
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /api/analytics/vibe-score | Get vibe score |
-| GET | /api/analytics/summary | Get analytics summary |
 
 ### Other
 | Method | Endpoint | Description |
@@ -205,33 +293,48 @@ Frontend will be at: `http://localhost:3000`
 | GET | /api/share | Get share data |
 | GET | /api/health | Health check |
 
+---
+
 ## Database Schema
 
-### Tables
-- **users** - User accounts (id, name, email, password_hash, avatar_url, bio)
-- **habits** - User habits (id, user_id, name, icon, color, frequency, completed_dates)
-- **goals** - User goals (id, user_id, title, description, target_value, current_value, unit)
-- **vitals** - Daily vital logs (id, user_id, vital_type, value, date)
-- **chat_messages** - AI chat history (id, user_id, session_id, role, content)
-- **challenges** - Community challenges (id, title, description, type, duration_days)
-- **challenge_participants** - Challenge participation (id, challenge_id, user_id, checkin_dates)
+| Table | Description |
+|-------|-------------|
+| users | User accounts + onboarding data |
+| habits | Daily habits with completion tracking |
+| goals | Personal goals with progress |
+| vitals | Daily vital logs (water, sleep, mood, steps, weight) |
+| chat_messages | AI coach conversation history |
+| challenges | Community challenges |
+| challenge_participants | Challenge participation & check-ins |
+| feed_posts | Community feed posts |
+| feed_likes | Post likes |
 
-## Deployment
+---
 
-### Deploy on any VPS (DigitalOcean, AWS, Railway, etc.)
-1. Set up PostgreSQL (or use Supabase)
-2. Deploy backend with gunicorn/uvicorn
-3. Build frontend: `cd frontend && yarn build`
-4. Serve with nginx or any static host
+## PWA (Progressive Web App)
 
-### Deploy on Vercel (Frontend only)
-```bash
-cd frontend
-vercel deploy
-```
+After deploying, users can install Vibly on their phone:
 
-### Deploy on Railway
-Push to GitHub and connect Railway for automatic deploys.
+**Android (Chrome):**
+1. Open the app URL in Chrome
+2. Tap the 3-dot menu (top right)
+3. Tap "Add to Home Screen" or "Install App"
+4. Done! App appears on home screen with Vibly icon
+
+**iPhone (Safari):**
+1. Open the app URL in Safari
+2. Tap the Share button (bottom center)
+3. Tap "Add to Home Screen"
+4. Done!
+
+**Features in PWA mode:**
+- Full-screen app experience (no browser bar)
+- Offline caching for static assets
+- Push notification reminders
+- Splash screen on launch
+- Works on all modern phones (Android 5+, iOS 12+)
+
+---
 
 ## License
 MIT
