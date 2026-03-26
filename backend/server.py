@@ -474,12 +474,7 @@ Use emojis sparingly. Never diagnose medical conditions."""
     )
     chat.with_model("openai", "gpt-4o-mini")
 
-    # Feed history to chat
-    for msg in history:
-        if msg.role == "user":
-            await chat.send_message(UserMessage(text=msg.content))
-
-    # Send new message
+    # Send new message (history is managed by LlmChat internally via session_id)
     response = await chat.send_message(UserMessage(text=data.message))
 
     # Save messages to DB

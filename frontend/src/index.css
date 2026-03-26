@@ -31,3 +31,5 @@ input, textarea {
 }
 .animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
 .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

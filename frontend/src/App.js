@@ -102,15 +102,15 @@ export default function App() {
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 backdrop-blur-xl bg-vibly-bg/90 border-t border-white/10" data-testid="bottom-nav">
-        <div className="max-w-4xl mx-auto px-2 flex">
-          {NAV_ITEMS.slice(0, 5).map(item => {
+        <div className="max-w-4xl mx-auto px-1 flex overflow-x-auto no-scrollbar">
+          {NAV_ITEMS.map(item => {
             const Icon = item.icon;
             const active = page === item.key;
             return (
               <button key={item.key} onClick={() => setPage(item.key)} data-testid={`nav-${item.key}`}
-                className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all ${active ? 'text-vibly-accent' : 'text-vibly-muted hover:text-white'}`}>
-                <Icon size={20} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">{item.label}</span>
+                className={`flex-1 min-w-[60px] py-3 flex flex-col items-center gap-1 transition-all ${active ? 'text-vibly-accent' : 'text-vibly-muted hover:text-white'}`}>
+                <Icon size={18} />
+                <span className="text-[9px] font-bold uppercase tracking-wider">{item.label}</span>
                 {active && <div className="w-4 h-0.5 bg-vibly-accent rounded-full" />}
               </button>
             );
