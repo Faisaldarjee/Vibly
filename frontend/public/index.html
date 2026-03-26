@@ -2,15 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <meta name="theme-color" content="#0A0A0C" />
-  <meta name="description" content="Vibly - Your AI-Powered Wellness Command Center" />
+  <meta name="description" content="Vibly - Track it. Feel it. Your AI-Powered Wellness Command Center." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Vibly" />
+  <link rel="apple-touch-icon" href="logo192.png" />
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="manifest" href="manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <title>Vibly</title>
+  <title>Vibly - Track it. Feel it.</title>
+  <style>
+    body { margin: 0; background: #0A0A0C; }
+    #splash { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0A0A0C; z-index: 9999; }
+    #splash img { width: 80px; height: 80px; border-radius: 20px; animation: pulse 1.5s ease-in-out infinite; }
+    #splash p { color: #A1A1AA; font-family: 'DM Sans', sans-serif; font-size: 14px; margin-top: 16px; letter-spacing: 0.1em; }
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(0.95); } }
+  </style>
 </head>
 <body>
+  <div id="splash">
+    <img src="logo192.png" alt="Vibly" />
+    <p>Track it. Feel it. Vibly.</p>
+  </div>
   <div id="root"></div>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+      });
+    }
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const splash = document.getElementById('splash');
+        if (splash) { splash.style.transition = 'opacity 0.3s'; splash.style.opacity = '0'; setTimeout(() => splash.remove(), 300); }
+      }, 800);
+    });
+  </script>
 </body>
 </html>

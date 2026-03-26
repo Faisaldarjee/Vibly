@@ -1,0 +1,26 @@
+{
+  "short_name": "Vibly",
+  "name": "Vibly - Track it. Feel it.",
+  "description": "Your AI-Powered Wellness Command Center. Track habits, goals, vitals and get personalized AI coaching.",
+  "icons": [
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0A0A0C",
+  "background_color": "#0A0A0C",
+  "orientation": "portrait",
+  "scope": "/",
+  "categories": ["health", "fitness", "lifestyle"]
+}

@@ -9,7 +9,7 @@ import AICoachPage from './components/AICoachPage';
 import ChallengesPage from './components/ChallengesPage';
 import AnalyticsPage from './components/AnalyticsPage';
 import ProfilePage from './components/ProfilePage';
-import { LayoutDashboard, Flame, Target, Heart, Sparkles, Trophy, BarChart3, User, Zap } from 'lucide-react';
+import { LayoutDashboard, Flame, Target, Heart, Sparkles, Trophy, BarChart3, User } from 'lucide-react';
 
 const NAV_ITEMS = [
   { key: 'dashboard', label: 'Home', icon: LayoutDashboard },
@@ -52,8 +52,8 @@ export default function App() {
     return (
       <div className="min-h-screen bg-vibly-bg flex items-center justify-center">
         <div className="text-center">
-          <Zap className="w-10 h-10 text-vibly-accent mx-auto mb-3 animate-pulse" />
-          <p className="text-vibly-muted text-sm">Loading Vibly...</p>
+          <img src="/logo192.png" alt="Vibly" className="w-16 h-16 mx-auto rounded-2xl mb-3 animate-pulse" />
+          <p className="text-vibly-muted text-sm tracking-widest uppercase">Track it. Feel it. Vibly.</p>
         </div>
       </div>
     );
@@ -80,9 +80,7 @@ export default function App() {
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-vibly-bg/75 border-b border-white/10" data-testid="app-header">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-vibly-accent/20 flex items-center justify-center">
-              <Zap size={16} className="text-vibly-accent" />
-            </div>
+            <img src="/logo192.png" alt="Vibly" className="w-8 h-8 rounded-lg" />
             <span className="font-heading text-xl font-black tracking-tight uppercase">VIBLY</span>
           </div>
           <div className="flex items-center gap-2">
