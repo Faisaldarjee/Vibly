@@ -15,11 +15,11 @@ from typing import List, Optional
 from sqlalchemy import select, delete, func, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from supabase import create_client
+import google.generativeai as genai
 
 from database import get_db, engine, Base, AsyncSessionLocal
 from models import (User, Habit, Goal, Vital, ChatMessage, Challenge,
                     ChallengeParticipant, FeedPost, FeedLike)
-from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 load_dotenv(Path(__file__).parent / '.env')
 
@@ -539,7 +539,7 @@ async def update_profile(data: ProfileUpdate, user: User = Depends(get_current_u
     return {"id": user.id, "name": user.name, "email": user.email, "avatar_url": user.avatar_url, "bio": user.bio}
 
 
-# ── AI Coach ──
+# ── AI Coach (Gemini - Free) ──
 @api_router.post("/ai/coach")
 async def ai_coach(data: AIMessageRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     session_id = data.session_id or str(uuid.uuid4())
@@ -560,13 +560,19 @@ Today's vitals: {vitals_info}
 Be encouraging, give practical advice, keep responses concise (2-3 sentences max).
 Use emojis sparingly. Never diagnose medical conditions."""
 
-    chat = LlmChat(
-        api_key=AI_KEY,
-        session_id=f"vibly-{user.id}-{session_id}",
-        system_message=system_msg
-    )
-    chat.with_model("openai", "gpt-4o-mini")
-    response = await chat.send_message(UserMessage(text=data.message))
+    response = "I'm here to help with your wellness journey!"
+    if AI_KEY:
+        try:
+            genai.configure(api_key=AI_KEY)
+            model = genai.GenerativeModel(
+                model_name="gemini-1.5-flash",
+                system_instruction=system_msg
+            )
+            result = model.generate_content(data.message)
+            response = result.text
+        except Exception as e:
+            logger.error(f"Gemini error: {e}")
+            response = "I'm having trouble connecting right now. Keep up the great work on your habits!"
 
     user_msg = ChatMessage(id=str(uuid.uuid4()), user_id=user.id, session_id=session_id, role="user", content=data.message)
     ai_msg = ChatMessage(id=str(uuid.uuid4()), user_id=user.id, session_id=session_id, role="assistant", content=response)
@@ -652,7 +658,6 @@ async def toggle_like(post_id: str, user: User = Depends(get_current_user), db: 
 
 @api_router.post("/feed/share-vibe")
 async def share_vibe_card(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    """Auto-generate a vibe card post with current stats"""
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     habits_res = await db.execute(select(Habit).where(Habit.user_id == user.id))
     habits = habits_res.scalars().all()
