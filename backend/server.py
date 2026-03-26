@@ -12,17 +12,24 @@ from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header
 from starlette.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from sqlalchemy import select, delete, func, and_
+from sqlalchemy import select, delete, func, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
+from supabase import create_client
 
 from database import get_db, engine, Base, AsyncSessionLocal
-from models import User, Habit, Goal, Vital, ChatMessage, Challenge, ChallengeParticipant
+from models import (User, Habit, Goal, Vital, ChatMessage, Challenge,
+                    ChallengeParticipant, FeedPost, FeedLike)
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 load_dotenv(Path(__file__).parent / '.env')
 
 JWT_SECRET = os.environ.get('JWT_SECRET', 'vibly-fallback-secret')
 EMERGENT_KEY = os.environ.get('EMERGENT_LLM_KEY')
+SUPABASE_URL = os.environ.get('SUPABASE_URL')
+SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY')
+
+# Initialize Supabase client for auth
+supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY) if SUPABASE_URL and SUPABASE_ANON_KEY else None
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -85,6 +92,16 @@ class ChallengeCreate(BaseModel):
     duration_days: int = 7
     icon: str = "trophy"
 
+class OnboardingData(BaseModel):
+    fitness_level: str
+    wellness_goals: List[str]
+    selected_habits: List[str] = []
+
+class FeedPostCreate(BaseModel):
+    content: str
+    post_type: str = "update"
+    data: dict = {}
+
 
 # ── Auth Helpers ──
 def hash_password(password: str) -> str:
@@ -104,6 +121,21 @@ async def get_current_user(authorization: str = Header(None), db: AsyncSession =
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing token")
     token = authorization.split(" ")[1]
+
+    # Try Supabase token first
+    if supabase:
+        try:
+            sb_user = supabase.auth.get_user(token)
+            if sb_user and sb_user.user:
+                sb_email = sb_user.user.email
+                result = await db.execute(select(User).where(User.email == sb_email))
+                user = result.scalar_one_or_none()
+                if user:
+                    return user
+        except Exception:
+            pass
+
+    # Fallback to local JWT
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
         user_id = payload["user_id"]
@@ -118,34 +150,95 @@ async def get_current_user(authorization: str = Header(None), db: AsyncSession =
     return user
 
 
-# ── Auth Routes ──
+# ── Auth Routes (Supabase + Local fallback) ──
 @api_router.post("/auth/register")
 async def register(data: UserCreate, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == data.email.lower()))
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already registered")
+
+    supabase_token = None
+    # Try Supabase Auth
+    if supabase:
+        try:
+            sb_res = supabase.auth.sign_up({"email": data.email.lower(), "password": data.password})
+            if sb_res.session:
+                supabase_token = sb_res.session.access_token
+        except Exception as e:
+            logger.warning(f"Supabase auth failed, using local: {e}")
+
     user = User(
         id=str(uuid.uuid4()),
         name=data.name,
         email=data.email.lower(),
-        password_hash=hash_password(data.password)
+        password_hash=hash_password(data.password),
+        onboarding_complete=False
     )
     db.add(user)
     await db.commit()
     await db.refresh(user)
-    return {"token": create_token(user.id), "user": {"id": user.id, "name": user.name, "email": user.email}}
+
+    token = supabase_token or create_token(user.id)
+    return {
+        "token": token,
+        "user": {"id": user.id, "name": user.name, "email": user.email, "onboarding_complete": False}
+    }
 
 @api_router.post("/auth/login")
 async def login(data: UserLogin, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == data.email.lower()))
     user = result.scalar_one_or_none()
-    if not user or not verify_password(data.password, user.password_hash):
+    if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    return {"token": create_token(user.id), "user": {"id": user.id, "name": user.name, "email": user.email}}
+
+    supabase_token = None
+    if supabase:
+        try:
+            sb_res = supabase.auth.sign_in_with_password({"email": data.email.lower(), "password": data.password})
+            if sb_res.session:
+                supabase_token = sb_res.session.access_token
+        except Exception as e:
+            logger.warning(f"Supabase login failed, using local: {e}")
+
+    if not supabase_token and not verify_password(data.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    token = supabase_token or create_token(user.id)
+    return {
+        "token": token,
+        "user": {"id": user.id, "name": user.name, "email": user.email, "onboarding_complete": user.onboarding_complete}
+    }
 
 @api_router.get("/auth/me")
 async def get_me(user: User = Depends(get_current_user)):
-    return {"id": user.id, "name": user.name, "email": user.email, "avatar_url": user.avatar_url, "bio": user.bio}
+    return {
+        "id": user.id, "name": user.name, "email": user.email,
+        "avatar_url": user.avatar_url, "bio": user.bio,
+        "onboarding_complete": user.onboarding_complete
+    }
+
+
+# ── Onboarding ──
+@api_router.post("/onboarding")
+async def complete_onboarding(data: OnboardingData, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    user.fitness_level = data.fitness_level
+    user.wellness_goals = data.wellness_goals
+    user.onboarding_complete = True
+    await db.commit()
+
+    # Auto-create selected habits
+    for habit_name in data.selected_habits:
+        template = next((t for t in HABIT_TEMPLATES if t["name"] == habit_name), None)
+        if template:
+            habit = Habit(
+                id=str(uuid.uuid4()), user_id=user.id,
+                name=template["name"], icon=template["icon"], color=template["color"],
+                completed_dates=[]
+            )
+            db.add(habit)
+    await db.commit()
+
+    return {"status": "ok", "onboarding_complete": True}
 
 
 # ── Habits Routes ──
@@ -324,36 +417,28 @@ async def get_week_vitals(user: User = Depends(get_current_user), db: AsyncSessi
 @api_router.get("/analytics/vibe-score")
 async def get_vibe_score(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    # Habits completion rate
     habits_res = await db.execute(select(Habit).where(Habit.user_id == user.id))
     habits = habits_res.scalars().all()
     habit_score = 0
     if habits:
         completed = sum(1 for h in habits if today in (h.completed_dates or []))
-        habit_score = (completed / len(habits)) * 40  # 40% weight
+        habit_score = (completed / len(habits)) * 40
 
-    # Vitals score
     vitals_res = await db.execute(select(Vital).where(and_(Vital.user_id == user.id, Vital.date == today)))
     vitals = {v.vital_type: v.value for v in vitals_res.scalars().all()}
-    vital_score = 0
     vital_checks = 0
-    if vitals.get('water', 0) >= 6:
-        vital_checks += 1
-    if vitals.get('sleep', 0) >= 7:
-        vital_checks += 1
-    if vitals.get('mood', 0) >= 3:
-        vital_checks += 1
-    if vitals.get('steps', 0) >= 5000:
-        vital_checks += 1
-    vital_score = (vital_checks / 4) * 30  # 30% weight
+    if vitals.get('water', 0) >= 6: vital_checks += 1
+    if vitals.get('sleep', 0) >= 7: vital_checks += 1
+    if vitals.get('mood', 0) >= 3: vital_checks += 1
+    if vitals.get('steps', 0) >= 5000: vital_checks += 1
+    vital_score = (vital_checks / 4) * 30
 
-    # Goals progress
     goals_res = await db.execute(select(Goal).where(Goal.user_id == user.id))
     goals = goals_res.scalars().all()
     goal_score = 0
     if goals:
         avg_progress = sum((g.current_value / g.target_value * 100) if g.target_value > 0 else 0 for g in goals) / len(goals)
-        goal_score = min(avg_progress, 100) / 100 * 30  # 30% weight
+        goal_score = min(avg_progress, 100) / 100 * 30
 
     total = round(habit_score + vital_score + goal_score)
     return {"vibe_score": min(total, 100), "habit_score": round(habit_score), "vital_score": round(vital_score), "goal_score": round(goal_score)}
@@ -423,7 +508,8 @@ async def get_profile(user: User = Depends(get_current_user), db: AsyncSession =
         "id": user.id, "name": user.name, "email": user.email,
         "avatar_url": user.avatar_url, "bio": user.bio,
         "habits_count": habits_count, "goals_count": goals_count,
-        "member_days": days
+        "member_days": days, "fitness_level": user.fitness_level,
+        "wellness_goals": user.wellness_goals or []
     }
 
 @api_router.put("/profile")
@@ -443,14 +529,6 @@ async def update_profile(data: ProfileUpdate, user: User = Depends(get_current_u
 async def ai_coach(data: AIMessageRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     session_id = data.session_id or str(uuid.uuid4())
 
-    # Get recent chat history from DB
-    history_res = await db.execute(
-        select(ChatMessage).where(and_(ChatMessage.user_id == user.id, ChatMessage.session_id == session_id))
-        .order_by(ChatMessage.created_at.desc()).limit(20)
-    )
-    history = list(reversed(history_res.scalars().all()))
-
-    # Get user context
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     habits_res = await db.execute(select(Habit).where(Habit.user_id == user.id))
     habits = habits_res.scalars().all()
@@ -461,7 +539,7 @@ async def ai_coach(data: AIMessageRequest, user: User = Depends(get_current_user
     vitals_info = ", ".join([f"{k}: {v}" for k, v in vitals.items()]) or "No vitals logged today"
 
     system_msg = f"""You are Vibly AI Coach - a friendly, supportive wellness and health coach.
-The user's name is {user.name}.
+The user's name is {user.name}. Fitness level: {user.fitness_level or 'not set'}.
 Their current habits: {habits_info}
 Today's vitals: {vitals_info}
 Be encouraging, give practical advice, keep responses concise (2-3 sentences max).
@@ -473,11 +551,8 @@ Use emojis sparingly. Never diagnose medical conditions."""
         system_message=system_msg
     )
     chat.with_model("openai", "gpt-4o-mini")
-
-    # Send new message (history is managed by LlmChat internally via session_id)
     response = await chat.send_message(UserMessage(text=data.message))
 
-    # Save messages to DB
     user_msg = ChatMessage(id=str(uuid.uuid4()), user_id=user.id, session_id=session_id, role="user", content=data.message)
     ai_msg = ChatMessage(id=str(uuid.uuid4()), user_id=user.id, session_id=session_id, role="assistant", content=response)
     db.add(user_msg)
@@ -495,16 +570,100 @@ async def get_ai_history(session_id: str, user: User = Depends(get_current_user)
     messages = result.scalars().all()
     return [{"role": m.role, "content": m.content, "created_at": m.created_at.isoformat() if m.created_at else ""} for m in messages]
 
-@api_router.get("/ai/sessions")
-async def get_ai_sessions(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+
+# ── Social Feed ──
+@api_router.get("/feed")
+async def get_feed(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        select(ChatMessage.session_id, func.max(ChatMessage.created_at).label('last_msg'))
-        .where(ChatMessage.user_id == user.id)
-        .group_by(ChatMessage.session_id)
-        .order_by(func.max(ChatMessage.created_at).desc())
+        select(FeedPost, User.name, User.avatar_url)
+        .join(User, FeedPost.user_id == User.id)
+        .order_by(desc(FeedPost.created_at))
+        .limit(50)
     )
-    sessions = result.all()
-    return [{"session_id": s[0], "last_message_at": s[1].isoformat() if s[1] else ""} for s in sessions]
+    rows = result.all()
+    out = []
+    for post, name, avatar in rows:
+        liked_res = await db.execute(
+            select(FeedLike).where(and_(FeedLike.post_id == post.id, FeedLike.user_id == user.id))
+        )
+        liked = liked_res.scalar_one_or_none() is not None
+        out.append({
+            "id": post.id, "user_name": name, "user_avatar": avatar or "",
+            "post_type": post.post_type, "content": post.content,
+            "data": post.data or {}, "likes_count": post.likes_count,
+            "liked": liked, "is_mine": post.user_id == user.id,
+            "created_at": post.created_at.isoformat() if post.created_at else ""
+        })
+    return out
+
+@api_router.post("/feed")
+async def create_feed_post(data: FeedPostCreate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    post = FeedPost(
+        id=str(uuid.uuid4()), user_id=user.id,
+        post_type=data.post_type, content=data.content, data=data.data
+    )
+    db.add(post)
+    await db.commit()
+    await db.refresh(post)
+    return {
+        "id": post.id, "user_name": user.name, "user_avatar": user.avatar_url or "",
+        "post_type": post.post_type, "content": post.content,
+        "data": post.data or {}, "likes_count": 0, "liked": False, "is_mine": True,
+        "created_at": post.created_at.isoformat() if post.created_at else ""
+    }
+
+@api_router.post("/feed/{post_id}/like")
+async def toggle_like(post_id: str, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    existing = await db.execute(
+        select(FeedLike).where(and_(FeedLike.post_id == post_id, FeedLike.user_id == user.id))
+    )
+    like = existing.scalar_one_or_none()
+    post_res = await db.execute(select(FeedPost).where(FeedPost.id == post_id))
+    post = post_res.scalar_one_or_none()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    if like:
+        await db.delete(like)
+        post.likes_count = max(0, post.likes_count - 1)
+        liked = False
+    else:
+        new_like = FeedLike(id=str(uuid.uuid4()), post_id=post_id, user_id=user.id)
+        db.add(new_like)
+        post.likes_count = (post.likes_count or 0) + 1
+        liked = True
+    await db.commit()
+    return {"liked": liked, "likes_count": post.likes_count}
+
+@api_router.post("/feed/share-vibe")
+async def share_vibe_card(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """Auto-generate a vibe card post with current stats"""
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    habits_res = await db.execute(select(Habit).where(Habit.user_id == user.id))
+    habits = habits_res.scalars().all()
+    completed = sum(1 for h in habits if today in (h.completed_dates or []))
+    longest_streak = max((_calc_streak(h.completed_dates or []) for h in habits), default=0)
+
+    vitals_res = await db.execute(select(Vital).where(and_(Vital.user_id == user.id, Vital.date == today)))
+    vitals = {v.vital_type: v.value for v in vitals_res.scalars().all()}
+
+    post = FeedPost(
+        id=str(uuid.uuid4()), user_id=user.id,
+        post_type="vibe_card",
+        content=f"Today's vibe check! {completed}/{len(habits)} habits done, {longest_streak} day streak!",
+        data={
+            "habits_done": completed, "habits_total": len(habits),
+            "streak": longest_streak, "water": vitals.get("water", 0),
+            "steps": vitals.get("steps", 0), "mood": vitals.get("mood", 0)
+        }
+    )
+    db.add(post)
+    await db.commit()
+    await db.refresh(post)
+    return {
+        "id": post.id, "user_name": user.name, "content": post.content,
+        "data": post.data, "post_type": "vibe_card"
+    }
 
 
 # ── Challenges ──
@@ -537,8 +696,7 @@ async def create_challenge(data: ChallengeCreate, user: User = Depends(get_curre
     db.add(challenge)
     await db.commit()
     await db.refresh(challenge)
-    return {"id": challenge.id, "title": challenge.title, "description": challenge.description,
-            "participants": 0, "joined": False}
+    return {"id": challenge.id, "title": challenge.title, "description": challenge.description, "participants": 0, "joined": False}
 
 @api_router.post("/challenges/{challenge_id}/join")
 async def join_challenge(challenge_id: str, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -588,8 +746,7 @@ async def get_share_data(user: User = Depends(get_current_user), db: AsyncSessio
     completed = sum(1 for h in habits if today in (h.completed_dates or []))
     longest_streak = max((_calc_streak(h.completed_dates or []) for h in habits), default=0)
     return {
-        "name": user.name,
-        "habits_today": f"{completed}/{len(habits)}",
+        "name": user.name, "habits_today": f"{completed}/{len(habits)}",
         "longest_streak": longest_streak,
         "member_since": user.created_at.strftime("%b %Y") if user.created_at else "2026"
     }
@@ -598,7 +755,7 @@ async def get_share_data(user: User = Depends(get_current_user), db: AsyncSessio
 # ── Health Check ──
 @api_router.get("/health")
 async def health():
-    return {"status": "ok", "version": "2.0"}
+    return {"status": "ok", "version": "2.1", "auth": "supabase+jwt"}
 
 
 # ── Startup ──
@@ -608,7 +765,6 @@ async def startup():
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Database tables created/verified")
 
-    # Seed default challenges
     async with AsyncSessionLocal() as db:
         result = await db.execute(select(func.count()).select_from(Challenge))
         count = result.scalar()

@@ -21,6 +21,9 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     avatar_url = Column(String(500), default='')
     bio = Column(Text, default='')
+    onboarding_complete = Column(Boolean, default=False)
+    fitness_level = Column(String(50), default='')
+    wellness_goals = Column(JSON, default=list)
     created_at = Column(DateTime(timezone=True), default=utc_now)
 
     habits = relationship('Habit', back_populates='user', cascade='all, delete-orphan')
@@ -101,3 +104,24 @@ class ChallengeParticipant(Base):
     user_id = Column(String(36), ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
     checkin_dates = Column(JSON, default=list)
     joined_at = Column(DateTime(timezone=True), default=utc_now)
+
+
+class FeedPost(Base):
+    __tablename__ = 'feed_posts'
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    post_type = Column(String(50), nullable=False, default='update')
+    content = Column(Text, default='')
+    data = Column(JSON, default=dict)
+    likes_count = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+
+    user = relationship('User', backref='posts')
+
+
+class FeedLike(Base):
+    __tablename__ = 'feed_likes'
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    post_id = Column(String(36), ForeignKey('feed_posts.id', ondelete='CASCADE'), nullable=False, index=True)
+    user_id = Column(String(36), ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now)

@@ -262,6 +262,55 @@ class ViblyAPITester:
         """Test daily quote endpoint"""
         return self.run_test("Get Daily Quote", "GET", "api/quote", 200, auth_required=False)
 
+    def test_onboarding(self):
+        """Test onboarding endpoint"""
+        success, _ = self.run_test(
+            "Complete Onboarding",
+            "POST",
+            "api/onboarding",
+            200,
+            data={
+                "fitness_level": "intermediate",
+                "wellness_goals": ["lose_weight", "better_sleep"],
+                "selected_habits": ["Drink Water", "Exercise", "Meditate"]
+            }
+        )
+        return success
+
+    def test_social_feed(self):
+        """Test social feed endpoints"""
+        # Get feed
+        success, feed = self.run_test("Get Feed", "GET", "api/feed", 200)
+        if not success:
+            return False
+
+        # Create post
+        success, post = self.run_test(
+            "Create Feed Post",
+            "POST",
+            "api/feed",
+            200,
+            data={"content": "Test post from API testing", "post_type": "update"}
+        )
+        if not success or 'id' not in post:
+            return False
+
+        post_id = post['id']
+
+        # Like post
+        success, like_response = self.run_test(f"Like Post", "POST", f"api/feed/{post_id}/like", 200)
+        if not success:
+            return False
+
+        # Unlike post (toggle)
+        success, unlike_response = self.run_test(f"Unlike Post", "POST", f"api/feed/{post_id}/like", 200)
+        if not success:
+            return False
+
+        # Share vibe card
+        success, vibe_post = self.run_test("Share Vibe Card", "POST", "api/feed/share-vibe", 200)
+        return success
+
 def main():
     print("🚀 Starting Vibly API Tests...")
     tester = ViblyAPITester()
@@ -281,6 +330,7 @@ def main():
     # Run all tests
     test_methods = [
         tester.test_get_me,
+        tester.test_onboarding,
         tester.test_habit_templates,
         tester.test_habits_crud,
         tester.test_goals_crud,
@@ -288,6 +338,7 @@ def main():
         tester.test_analytics,
         tester.test_ai_coach,
         tester.test_challenges,
+        tester.test_social_feed,
         tester.test_profile,
         tester.test_quote
     ]

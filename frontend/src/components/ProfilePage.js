@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
-import { User, Calendar, Target, Flame, Edit3, Save, LogOut } from 'lucide-react';
+import { User, Calendar, Target, Flame, Edit3, Save, LogOut, Trophy, BarChart3, ChevronRight } from 'lucide-react';
 
-export default function ProfilePage({ user, onLogout }) {
+export default function ProfilePage({ user, onLogout, onNavigate }) {
   const [profile, setProfile] = useState(null);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
