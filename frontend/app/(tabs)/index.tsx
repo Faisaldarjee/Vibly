@@ -110,18 +110,17 @@ export default function HomeScreen() {
     setLoading(true);
     setError(false);
     try {
-      const [vibe, hab, vit, q, ins] = await Promise.all([
+      const [vibe, hab, vit, q] = await Promise.all([
         api('/analytics/vibe-score'),
         api('/habits'),
         api('/vitals/today'),
-        api('/quote/daily'),
-        api('/ai/insights'),
+        api('/quote'),
       ]);
       setVibeData(vibe);
       setHabits(hab);
       setVitals(vit);
-      setQuote(q.quote);
-      setInsights(ins.insights || []);
+      setQuote(q.text);
+      setInsights([]);
     } catch (_e) {
       setError(true);
     }
@@ -133,8 +132,8 @@ export default function HomeScreen() {
   async function toggleHabit(id: string) {
     try {
       const res = await api(`/habits/${id}/toggle`, { method: 'POST' });
-      setHabits(prev => prev.map(h => h.id === id ? { ...h, completed_today: res.completed } : h));
-      if (res.completed) showToast('Habit completed! 🎉', 'success');
+      setHabits(prev => prev.map(h => h.id === id ? { ...h, completed_today: res.completed_today } : h));
+      if (res.completed_today) showToast('Habit completed! 🎉', 'success');
       fetchAll();
     } catch (_e) {
       showToast('Could not update habit', 'error');
@@ -143,7 +142,7 @@ export default function HomeScreen() {
 
   async function logWater() {
     try {
-      await api('/vitals/log', { method: 'POST', body: JSON.stringify({ type: 'water', value: 1 }) });
+      await api('/vitals', { method: 'POST', body: JSON.stringify({ vital_type: 'water', value: 1 }) });
       showToast('Water logged! 💧', 'success');
       fetchAll();
     } catch (_e) { showToast('Could not log water', 'error'); }
@@ -151,7 +150,7 @@ export default function HomeScreen() {
   async function logMood(val: number) {
     setMoodModal(false);
     try {
-      await api('/vitals/log', { method: 'POST', body: JSON.stringify({ type: 'mood', value: val }) });
+      await api('/vitals', { method: 'POST', body: JSON.stringify({ vital_type: 'mood', value: val }) });
       showToast('Mood logged! 🧠', 'success');
       fetchAll();
     } catch (_e) { showToast('Could not log mood', 'error'); }
@@ -160,7 +159,7 @@ export default function HomeScreen() {
     setSleepModal(false);
     if (isNaN(val) || val <= 0) return;
     try {
-      await api('/vitals/log', { method: 'POST', body: JSON.stringify({ type: 'sleep', value: val }) });
+      await api('/vitals', { method: 'POST', body: JSON.stringify({ vital_type: 'sleep', value: val }) });
       showToast(`${val}h sleep logged! 🌙`, 'success');
       fetchAll();
     } catch (_e) { showToast('Could not log sleep', 'error'); }
@@ -169,7 +168,7 @@ export default function HomeScreen() {
     setStepsModal(false);
     if (isNaN(val) || val <= 0) return;
     try {
-      await api('/vitals/log', { method: 'POST', body: JSON.stringify({ type: 'steps', value: val }) });
+      await api('/vitals', { method: 'POST', body: JSON.stringify({ vital_type: 'steps', value: val }) });
       showToast(`${val} steps logged! 🚶`, 'success');
       fetchAll();
     } catch (_e) { showToast('Could not log steps', 'error'); }

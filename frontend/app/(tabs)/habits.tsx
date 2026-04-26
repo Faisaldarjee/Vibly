@@ -48,8 +48,8 @@ export default function HabitsScreen() {
   async function toggleHabit(id: string) {
     try {
       const res = await api(`/habits/${id}/toggle`, { method: 'POST' });
-      setHabits(prev => prev.map(h => h.id === id ? { ...h, completed_today: res.completed } : h));
-      if (res.completed) showToast('Habit completed! ✅', 'success');
+      setHabits(prev => prev.map(h => h.id === id ? { ...h, completed_today: res.completed_today } : h));
+      if (res.completed_today) showToast('Habit completed! ✅', 'success');
     } catch (_e) { showToast('Could not toggle habit', 'error'); }
   }
 

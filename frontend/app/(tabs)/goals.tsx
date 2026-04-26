@@ -77,7 +77,7 @@ export default function GoalsScreen() {
     if (!title.trim() || !target || !unit.trim()) { Alert.alert('Error', 'Please fill all fields'); return; }
     setSaving(true);
     try {
-      const g = await api('/goals', { method: 'POST', body: JSON.stringify({ title: title.trim(), category, target: parseFloat(target), unit: unit.trim() }) });
+      const g = await api('/goals', { method: 'POST', body: JSON.stringify({ title: title.trim(), description: category, target_value: parseFloat(target), unit: unit.trim() }) });
       setGoals(prev => [...prev, g]);
       setShowAddGoal(false); setTitle(''); setTarget(''); setUnit('');
       showToast('Goal created! 🏆', 'success');
@@ -87,7 +87,7 @@ export default function GoalsScreen() {
   async function updateProgress(goalId: string) {
     const val = parseFloat(progressVal);
     if (isNaN(val)) return;
-    try { await api(`/goals/${goalId}/progress`, { method: 'PUT', body: JSON.stringify({ value: val }) }); setShowProgress(null); setProgressVal(''); showToast('Progress updated! 📈', 'success'); fetchAll(); } catch (_e) { showToast('Could not update progress', 'error'); }
+    try { await api(`/goals/${goalId}/progress`, { method: 'PUT', body: JSON.stringify({ current_value: val }) }); setShowProgress(null); setProgressVal(''); showToast('Progress updated! 📈', 'success'); fetchAll(); } catch (_e) { showToast('Could not update progress', 'error'); }
   }
   async function deleteGoal(id: string) {
     Alert.alert('Delete Goal', 'Are you sure you want to delete this goal?', [{ text: 'Cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { try { await api(`/goals/${id}`, { method: 'DELETE' }); setGoals(prev => prev.filter(g => g.id !== id)); showToast('Goal deleted', 'info'); } catch (_e) { showToast('Could not delete goal', 'error'); } } }]);
@@ -98,7 +98,7 @@ export default function GoalsScreen() {
     if (!cTitle.trim() || !cDesc.trim()) { Alert.alert('Error', 'Please fill title and description'); return; }
     setSaving(true);
     try {
-      const c = await api('/challenges', { method: 'POST', body: JSON.stringify({ title: cTitle.trim(), description: cDesc.trim(), habit_type: cType, duration_days: parseInt(cDays) || 7, daily_target: cTarget.trim() }) });
+      const c = await api('/challenges', { method: 'POST', body: JSON.stringify({ title: cTitle.trim(), description: cDesc.trim(), challenge_type: cType, duration_days: parseInt(cDays) || 7, icon: 'trophy' }) });
       setChallenges(prev => [c, ...prev]);
       setShowAddChallenge(false); setCTitle(''); setCDesc(''); setCTarget('');
       showToast('Challenge created! 🚀', 'success');

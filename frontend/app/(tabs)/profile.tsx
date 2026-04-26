@@ -44,7 +44,7 @@ export default function ProfileScreen() {
   const fetchProfile = useCallback(async () => {
     setLoading(true);
     try {
-      const [p, s] = await Promise.all([api('/profile'), api('/share/streak')]);
+      const [p, s] = await Promise.all([api('/profile'), api('/share')]);
       setProfile(p);
       setShareData(s);
     } catch (_e) {}
